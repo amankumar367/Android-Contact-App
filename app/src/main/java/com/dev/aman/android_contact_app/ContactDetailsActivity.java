@@ -10,7 +10,7 @@ import android.widget.TextView;
 
 public class ContactDetailsActivity extends AppCompatActivity {
 
-    private TextView mName;
+    private TextView mName, mFirstName, mLastName;
     private TextView mEmail;
     private TextView mNubmer;
     private ImageView mProfileImage;
@@ -29,6 +29,9 @@ public class ContactDetailsActivity extends AppCompatActivity {
 
     private void init() {
         mName = findViewById(R.id.profile_name);
+        mFirstName = findViewById(R.id.profile_first_name);
+        mLastName = findViewById(R.id.profile_last_name);
+
         mNubmer = findViewById(R.id.profile_phone_number);
         mProfileImage = findViewById(R.id.profile_image);
 
@@ -53,8 +56,11 @@ public class ContactDetailsActivity extends AppCompatActivity {
     private void setContactDetails() {
         if(isStringEmpty(contactModel.getName())){
             mName.setText(contactModel.getName());
+            setFirstAndLastName(contactModel.getName());
         }else {
             mName.setText("");
+            mFirstName.setText("");
+            mLastName.setText("");
         }
 
         if(isStringEmpty(contactModel.getNumber())){
@@ -73,5 +79,24 @@ public class ContactDetailsActivity extends AppCompatActivity {
 
     private boolean isStringEmpty(String isEmptyString) {
         return !TextUtils.isEmpty(isEmptyString);
+    }
+
+    private void setFirstAndLastName(String name) {
+        String lastName = "";
+        String firstName= "";
+        if(name.split("\\w+").length>1){
+
+            lastName = name.substring(name.lastIndexOf(" ")+1);
+            firstName = name.substring(0, name.lastIndexOf(' '));
+
+            mFirstName.setText(firstName);
+            mLastName.setText(lastName);
+        }
+        else{
+            firstName = name;
+            mFirstName.setText(firstName);
+            mLastName.setText("");
+        }
+
     }
 }

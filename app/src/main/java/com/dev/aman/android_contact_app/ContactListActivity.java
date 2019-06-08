@@ -13,6 +13,7 @@ import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.text.TextUtils;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -51,6 +52,8 @@ public class ContactListActivity extends AppCompatActivity {
         if (hasContactReadPermission()) {
             Cursor phones = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
             while (phones.moveToNext()) {
+
+                String id = phones.getString(phones.getColumnIndex(ContactsContract.Contacts._ID));
                 String name = phones.getString(
                         phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
 
@@ -61,9 +64,26 @@ public class ContactListActivity extends AppCompatActivity {
                 String image = phones.getString(
                         phones.getColumnIndex(ContactsContract.CommonDataKinds.Photo.CONTACT_ID));
 
+                String email = null;
+                Cursor emailCursor = getContentResolver()
+                        .query(
+                                ContactsContract.CommonDataKinds.Email.CONTENT_URI,
+                                null,
+                        ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
+                                new String[]{id},
+                                null);
+                if (emailCursor != null && emailCursor.moveToFirst()) {
+                    email = emailCursor.getString(
+                            emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
+
+                    emailCursor.close();
+                }
+
                 ContactModel contactModel = new ContactModel();
                 contactModel.setName(name);
                 contactModel.setNumber(phoneNumber);
+                if(!TextUtils.isEmpty(email))
+                    contactModel.setEmail(email);
 
                 if (!map.containsKey(phoneNumber))
                     map.put(phoneNumber, contactModel);
