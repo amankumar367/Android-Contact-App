@@ -27,6 +27,8 @@ dependencies {
 
     implementation allImplementation.values()
 
+    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     androidTestAnnotationProcessor androidTestAnnotationProcessor.values()
 
     testAnnotationProcessor testAnnotationProcessor.values()
