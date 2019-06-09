@@ -1,4 +1,4 @@
-package com.dev.aman.android_contact_app;
+package com.dev.aman.android_contact_app.ui;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -11,6 +11,10 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.dev.aman.android_contact_app.adapter.ContactListAdapter;
+import com.dev.aman.android_contact_app.model.ContactModel;
+import com.dev.aman.android_contact_app.R;
 
 import java.io.FileDescriptor;
 import java.io.IOException;

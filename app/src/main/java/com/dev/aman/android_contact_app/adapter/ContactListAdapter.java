@@ -1,4 +1,4 @@
-package com.dev.aman.android_contact_app;
+package com.dev.aman.android_contact_app.adapter;
 
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +14,10 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.dev.aman.android_contact_app.R;
+import com.dev.aman.android_contact_app.model.ContactModel;
+import com.dev.aman.android_contact_app.ui.ContactDetailsActivity;
 
 import java.io.FileDescriptor;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package com.dev.aman.android_contact_app;
+package com.dev.aman.android_contact_app.ui;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -8,16 +8,20 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Patterns;
+
+import com.dev.aman.android_contact_app.adapter.ContactListAdapter;
+import com.dev.aman.android_contact_app.model.ContactModel;
+import com.dev.aman.android_contact_app.R;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,6 +34,7 @@ public class ContactListActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 100;
     private RecyclerView recyclerView;
     private ContactListAdapter adapter;
+    private ProgressDialog mProgressBar;
     private ArrayList<ContactModel> arrayList = new ArrayList<>();
 
     @Override
@@ -39,23 +44,29 @@ public class ContactListActivity extends AppCompatActivity {
 
         init();
         loadContactList();
-        onClicks();
 
     }
 
     private void init() {
         recyclerView = findViewById(R.id.recyclerView);
-    }
 
-    private void onClicks() {
-
+        mProgressBar = new ProgressDialog(this);
+        mProgressBar.setMessage("Loading Contact List . . .");
+        mProgressBar.setCanceledOnTouchOutside(false);
     }
 
     private void loadContactList() {
 
         if (hasContactReadPermission()) {
-            getContactDetails();
-            setRecyclerView();
+            mProgressBar.show();
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    getContactDetails();
+                    setRecyclerView();
+                }
+            },200);
+
         } else {
             requestPermission();
         }
@@ -89,12 +100,10 @@ public class ContactListActivity extends AppCompatActivity {
                         new String[]{id},
                         null);
 
-
                 if (cursorEmail != null && cursorEmail.moveToFirst()) {
                     email = cursorEmail.getString(cursorEmail.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
                     cursorEmail.close();
                 }
-
 
                 // get the user's phone number
                 String phone = null;
@@ -130,21 +139,12 @@ public class ContactListActivity extends AppCompatActivity {
         }
     }
 
-    private Uri getContactImage(long contactID){
-        Uri uri =  ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, contactID);
-        Uri imageUri = null;
-
-        if(uri != null){
-            imageUri = Uri.withAppendedPath(uri, ContactsContract.Contacts.Photo.DISPLAY_PHOTO);
-        }
-        return imageUri;
-    }
-
     private void setRecyclerView() {
         adapter = new ContactListAdapter(this, arrayList);
         recyclerView.setHasFixedSize(false);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
+        mProgressBar.dismiss();
     }
 
     private void sortArrayList(HashMap<String, ContactModel> hashmap) {
@@ -186,10 +186,11 @@ public class ContactListActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                mProgressBar.show();
                 loadContactList();
+            }  else {
+                requestPermission();
             }
-        } else {
-            requestPermission();
         }
     }
 }

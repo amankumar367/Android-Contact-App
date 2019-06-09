@@ -1,4 +1,4 @@
-package com.dev.aman.android_contact_app;
+package com.dev.aman.android_contact_app.model;
 
 import java.io.Serializable;
 
