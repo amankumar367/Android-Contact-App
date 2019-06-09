@@ -2,11 +2,18 @@ package com.dev.aman.android_contact_app;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import java.io.FileDescriptor;
+import java.io.IOException;
 
 public class ContactDetailsActivity extends AppCompatActivity {
 
@@ -75,6 +82,15 @@ public class ContactDetailsActivity extends AppCompatActivity {
         }else {
             mEmail.setText("");
         }
+
+        if(isStringEmpty(contactModel.getImage())){
+            try {
+                Uri uri = Uri.parse(contactModel.getImage());
+                mProfileImage.setImageBitmap(getBitmap(uri));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private boolean isStringEmpty(String isEmptyString) {
@@ -98,5 +114,14 @@ public class ContactDetailsActivity extends AppCompatActivity {
             mLastName.setText("");
         }
 
+    }
+
+    private Bitmap getBitmap(Uri imageUri) throws IOException {
+        ParcelFileDescriptor parcelFileDescriptor =
+                getContentResolver().openFileDescriptor(imageUri, "r");
+        FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
+        Bitmap image = BitmapFactory.decodeFileDescriptor(fileDescriptor);
+        parcelFileDescriptor.close();
+        return image;
     }
 }

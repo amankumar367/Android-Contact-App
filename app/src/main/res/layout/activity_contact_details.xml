@@ -26,12 +26,13 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_navigate_black_24dp" />
 
-    <ImageView
+    <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/profile_image"
         android:layout_width="70dp"
         android:layout_height="70dp"
         android:layout_marginTop="32dp"
         android:contentDescription="@null"
+        android:src="@drawable/account_circle_black"
         app:layout_constraintEnd_toEndOf="@+id/view"
         app:layout_constraintStart_toStartOf="@+id/view"
         app:layout_constraintTop_toTopOf="@+id/view"

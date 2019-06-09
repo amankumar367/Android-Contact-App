@@ -9,21 +9,21 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
-import android.widget.Toast;
+import android.util.Patterns;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ContactListActivity extends AppCompatActivity {
 
@@ -47,72 +47,97 @@ public class ContactListActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
     }
 
+    private void onClicks() {
+
+    }
+
     private void loadContactList() {
-        HashMap<String, ContactModel> map = new HashMap<String, ContactModel>();
 
         if (hasContactReadPermission()) {
-            ContentResolver contentResolver = getContentResolver();
-            Cursor cursor = contentResolver.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
-            if (cursor != null && cursor.moveToFirst()) {
-
-                do {
-                    // get the contact's information
-                    String id = cursor
-                            .getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
-                    String name = cursor
-                            .getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                    Integer hasPhone = cursor
-                            .getInt(cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER));
-
-                    // get the user's email address
-                    String email = null;
-                    Cursor cursorEmail = contentResolver.query(
-                            ContactsContract.CommonDataKinds.Email.CONTENT_URI,
-                            null,
-                            ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
-                            new String[]{id},
-                            null);
-                    if (cursorEmail != null && cursorEmail.moveToFirst()) {
-                        email = cursorEmail.getString(cursorEmail.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
-                        cursorEmail.close();
-                    }
-
-                    // get the user's phone number
-                    String phone = null;
-                    if (hasPhone > 0) {
-                        Cursor cursorPhone = contentResolver.query(
-                                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                                null,
-                                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
-                                new String[]{id}, null);
-                        if (cursorPhone != null && cursorPhone.moveToFirst()) {
-                            phone = cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                            cursorPhone.close();
-                        }
-                    }
-
-                    // if the user has an email or phone then add it to contacts
-                    if ((!TextUtils.isEmpty(email) && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-                            && !email.equalsIgnoreCase(name)) || (!TextUtils.isEmpty(phone))) {
-                        ContactModel contactModel = new ContactModel();
-                        contactModel.setName(name);
-                        contactModel.setNumber(phone);
-                        contactModel.setEmail(email);
-
-                        if (!map.containsKey(phone))
-                            map.put(phone, contactModel);
-
-                    }
-
-                } while (cursor.moveToNext());
-
-                cursor.close();
-                sortArrayList(map);
-                setRecyclerView();
-            }
+            getContactDetails();
+            setRecyclerView();
         } else {
             requestPermission();
         }
+    }
+
+    private void getContactDetails() {
+        HashMap<String, ContactModel> map = new HashMap<String, ContactModel>();
+        ContentResolver contentResolver = getContentResolver();
+        Cursor cursor = contentResolver.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+
+            do {
+                // get the contact's information
+                String id = cursor
+                        .getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
+                String name = cursor
+                        .getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                Integer hasPhone = cursor
+                        .getInt(cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER));
+
+                String image = null;
+                image = cursor.getString(
+                        cursor.getColumnIndex(ContactsContract.Contacts.Photo.PHOTO_THUMBNAIL_URI));
+
+                // get the user's email address
+                String email = null;
+                Cursor cursorEmail = contentResolver.query(
+                        ContactsContract.CommonDataKinds.Email.CONTENT_URI,
+                        null,
+                        ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
+                        new String[]{id},
+                        null);
+
+
+                if (cursorEmail != null && cursorEmail.moveToFirst()) {
+                    email = cursorEmail.getString(cursorEmail.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
+                    cursorEmail.close();
+                }
+
+
+                // get the user's phone number
+                String phone = null;
+                if (hasPhone > 0) {
+                    Cursor cursorPhone = contentResolver.query(
+                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                            null,
+                            ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+                            new String[]{id}, null);
+                    if (cursorPhone != null && cursorPhone.moveToFirst()) {
+                        phone = cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                        cursorPhone.close();
+                    }
+                }
+
+                // if the user has an email or phone then add it to contacts
+                if ((!TextUtils.isEmpty(email) && Patterns.EMAIL_ADDRESS.matcher(email).matches()
+                        && !email.equalsIgnoreCase(name)) || (!TextUtils.isEmpty(phone))) {
+                    ContactModel contactModel = new ContactModel();
+                    contactModel.setName(name);
+                    contactModel.setNumber(phone);
+                    contactModel.setEmail(email);
+                    contactModel.setImage(image);
+
+                    if (!map.containsKey(phone))
+                        map.put(phone, contactModel);
+
+                }
+
+            } while (cursor.moveToNext());
+            cursor.close();
+            sortArrayList(map);
+        }
+    }
+
+    private Uri getContactImage(long contactID){
+        Uri uri =  ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, contactID);
+        Uri imageUri = null;
+
+        if(uri != null){
+            imageUri = Uri.withAppendedPath(uri, ContactsContract.Contacts.Photo.DISPLAY_PHOTO);
+        }
+        return imageUri;
     }
 
     private void setRecyclerView() {
@@ -136,10 +161,6 @@ public class ContactListActivity extends AppCompatActivity {
                 return c1.getName().compareToIgnoreCase(c2.getName());
             }
         });
-    }
-
-    private void onClicks() {
-
     }
 
     private boolean hasContactReadPermission() {

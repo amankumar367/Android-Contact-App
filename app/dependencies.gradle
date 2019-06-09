@@ -45,7 +45,6 @@ ext {
     androidLibraries = [
             multiDex     : "androidx.multidex:multidex:$vMultiDex",
             supportDesign: "com.google.android.material:material:$vSupport"
-
     ]
 
     rxJavaDependencies = [
@@ -64,7 +63,6 @@ ext {
 
     libs = [
             circleImageview : "de.hdodenhof:circleimageview:$vCircleImageView",
-            expandableLayout: "net.cachapa.expandablelayout:expandablelayout:$vExpandableLayout",
             stetho          : "com.facebook.stetho:stetho:$vStetho",
             stethoOkHttp    : "com.facebook.stetho:stetho-okhttp3:$vStetho",
             dagger          : dagger.dagger
@@ -97,6 +95,7 @@ ext {
             androidTestLibs      : androidTestLibs.values(),
             rxJavaDependencies   : rxJavaDependencies.values(),
             testLibs             : testLibs.values(),
-            archLifecycle        : archLifecycle.values()
+            archLifecycle        : archLifecycle.values(),
+            androidLibs          : libs.values()
     ]
 }
