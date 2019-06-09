@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.content.ContentResolver;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Build;
@@ -50,50 +51,65 @@ public class ContactListActivity extends AppCompatActivity {
         HashMap<String, ContactModel> map = new HashMap<String, ContactModel>();
 
         if (hasContactReadPermission()) {
-            Cursor phones = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
-            while (phones.moveToNext()) {
+            ContentResolver contentResolver = getContentResolver();
+            Cursor cursor = contentResolver.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
 
-                String id = phones.getString(phones.getColumnIndex(ContactsContract.Contacts._ID));
-                String name = phones.getString(
-                        phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                do {
+                    // get the contact's information
+                    String id = cursor
+                            .getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
+                    String name = cursor
+                            .getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                    Integer hasPhone = cursor
+                            .getInt(cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER));
 
-                String phoneNumber = phones.getString(
-                        phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
-                        .replaceAll("[^0-9+]", "");
+                    // get the user's email address
+                    String email = null;
+                    Cursor cursorEmail = contentResolver.query(
+                            ContactsContract.CommonDataKinds.Email.CONTENT_URI,
+                            null,
+                            ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
+                            new String[]{id},
+                            null);
+                    if (cursorEmail != null && cursorEmail.moveToFirst()) {
+                        email = cursorEmail.getString(cursorEmail.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
+                        cursorEmail.close();
+                    }
 
-                String image = phones.getString(
-                        phones.getColumnIndex(ContactsContract.CommonDataKinds.Photo.CONTACT_ID));
-
-                String email = null;
-                Cursor emailCursor = getContentResolver()
-                        .query(
-                                ContactsContract.CommonDataKinds.Email.CONTENT_URI,
+                    // get the user's phone number
+                    String phone = null;
+                    if (hasPhone > 0) {
+                        Cursor cursorPhone = contentResolver.query(
+                                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                                 null,
-                        ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
-                                new String[]{id},
-                                null);
-                if (emailCursor != null && emailCursor.moveToFirst()) {
-                    email = emailCursor.getString(
-                            emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
+                                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+                                new String[]{id}, null);
+                        if (cursorPhone != null && cursorPhone.moveToFirst()) {
+                            phone = cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                            cursorPhone.close();
+                        }
+                    }
 
-                    emailCursor.close();
-                }
+                    // if the user has an email or phone then add it to contacts
+                    if ((!TextUtils.isEmpty(email) && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+                            && !email.equalsIgnoreCase(name)) || (!TextUtils.isEmpty(phone))) {
+                        ContactModel contactModel = new ContactModel();
+                        contactModel.setName(name);
+                        contactModel.setNumber(phone);
+                        contactModel.setEmail(email);
 
-                ContactModel contactModel = new ContactModel();
-                contactModel.setName(name);
-                contactModel.setNumber(phoneNumber);
-                if(!TextUtils.isEmpty(email))
-                    contactModel.setEmail(email);
+                        if (!map.containsKey(phone))
+                            map.put(phone, contactModel);
 
-                if (!map.containsKey(phoneNumber))
-                    map.put(phoneNumber, contactModel);
+                    }
 
+                } while (cursor.moveToNext());
+
+                cursor.close();
+                sortArrayList(map);
+                setRecyclerView();
             }
-
-            phones.close();
-            sortArrayList(map);
-            setRecyclerView();
-
         } else {
             requestPermission();
         }
