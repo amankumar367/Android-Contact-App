@@ -10,7 +10,6 @@ import android.os.ParcelFileDescriptor;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -18,9 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class ContactListAdapter extends RecyclerView.Adapter<ContactListAdapter.ContactListViewHolder> {
 
@@ -63,7 +62,7 @@ public class ContactListAdapter extends RecyclerView.Adapter<ContactListAdapter.
 
         View view;
         TextView mName, mNumber;
-        ImageView mImage;
+        CircleImageView mImage;
 
         ContactListViewHolder(@NonNull View itemView) {
             super(itemView);

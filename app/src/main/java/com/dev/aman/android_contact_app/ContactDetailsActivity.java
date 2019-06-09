@@ -15,12 +15,14 @@ import android.widget.TextView;
 import java.io.FileDescriptor;
 import java.io.IOException;
 
+import de.hdodenhof.circleimageview.CircleImageView;
+
 public class ContactDetailsActivity extends AppCompatActivity {
 
     private TextView mName, mFirstName, mLastName;
     private TextView mEmail;
     private TextView mNubmer;
-    private ImageView mProfileImage;
+    private CircleImageView mProfileImage;
     private ImageView mBack;
 
     private ContactModel contactModel;
