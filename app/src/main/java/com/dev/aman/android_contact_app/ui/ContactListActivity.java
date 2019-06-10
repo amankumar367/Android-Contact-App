@@ -1,41 +1,35 @@
 package com.dev.aman.android_contact_app.ui;
 
+import android.Manifest;
+import android.app.ProgressDialog;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.Manifest;
-import android.app.ProgressDialog;
-import android.content.ContentResolver;
-import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.provider.ContactsContract;
-import android.text.TextUtils;
-import android.util.Patterns;
-
+import com.dev.aman.android_contact_app.R;
 import com.dev.aman.android_contact_app.adapter.ContactListAdapter;
 import com.dev.aman.android_contact_app.model.ContactModel;
-import com.dev.aman.android_contact_app.R;
+import com.dev.aman.android_contact_app.viewmodel.ContactListViewModel;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
 
 public class ContactListActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 100;
+    private ArrayList<ContactModel> arrayList = new ArrayList<>();
     private RecyclerView recyclerView;
     private ContactListAdapter adapter;
     private ProgressDialog mProgressBar;
-    private ArrayList<ContactModel> arrayList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +56,7 @@ public class ContactListActivity extends AppCompatActivity {
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    getContactDetails();
+                    fatchContactList();
                     setRecyclerView();
                 }
             },200);
@@ -72,72 +66,19 @@ public class ContactListActivity extends AppCompatActivity {
         }
     }
 
-    private void getContactDetails() {
-        HashMap<String, ContactModel> map = new HashMap<String, ContactModel>();
-        ContentResolver contentResolver = getContentResolver();
-        Cursor cursor = contentResolver.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
-        if (cursor != null && cursor.moveToFirst()) {
+    private void fatchContactList() {
+        ContactListViewModel contactListViewModel =
+                ViewModelProviders.of(this).get(ContactListViewModel.class);
 
-            do {
-                // get the contact's information
-                String id = cursor
-                        .getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
-                String name = cursor
-                        .getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                Integer hasPhone = cursor
-                        .getInt(cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER));
-
-                String image = null;
-                image = cursor.getString(
-                        cursor.getColumnIndex(ContactsContract.Contacts.Photo.PHOTO_THUMBNAIL_URI));
-
-                // get the user's email address
-                String email = null;
-                Cursor cursorEmail = contentResolver.query(
-                        ContactsContract.CommonDataKinds.Email.CONTENT_URI,
-                        null,
-                        ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
-                        new String[]{id},
-                        null);
-
-                if (cursorEmail != null && cursorEmail.moveToFirst()) {
-                    email = cursorEmail.getString(cursorEmail.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
-                    cursorEmail.close();
-                }
-
-                // get the user's phone number
-                String phone = null;
-                if (hasPhone > 0) {
-                    Cursor cursorPhone = contentResolver.query(
-                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                            null,
-                            ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
-                            new String[]{id}, null);
-                    if (cursorPhone != null && cursorPhone.moveToFirst()) {
-                        phone = cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                        cursorPhone.close();
-                    }
-                }
-
-                // if the user has an email or phone then add it to contacts
-                if ((!TextUtils.isEmpty(email) && Patterns.EMAIL_ADDRESS.matcher(email).matches()
-                        && !email.equalsIgnoreCase(name)) || (!TextUtils.isEmpty(phone))) {
-                    ContactModel contactModel = new ContactModel();
-                    contactModel.setName(name);
-                    contactModel.setNumber(phone);
-                    contactModel.setEmail(email);
-                    contactModel.setImage(image);
-
-                    if (!map.containsKey(phone))
-                        map.put(phone, contactModel);
-
-                }
-
-            } while (cursor.moveToNext());
-            cursor.close();
-            sortArrayList(map);
-        }
+        contactListViewModel.getContactDetails();
+        contactListViewModel.contact.observe(this, new Observer<ArrayList<ContactModel>>() {
+            @Override
+            public void onChanged(ArrayList<ContactModel> contactModels) {
+                arrayList = contactModels;
+            }
+        });
     }
+
 
     private void setRecyclerView() {
         adapter = new ContactListAdapter(this, arrayList);
@@ -145,22 +86,6 @@ public class ContactListActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
         mProgressBar.dismiss();
-    }
-
-    private void sortArrayList(HashMap<String, ContactModel> hashmap) {
-        arrayList.clear();
-
-        for (Map.Entry<String, ContactModel> map : hashmap.entrySet())
-            arrayList.add(map.getValue());
-
-        Collections.sort(arrayList, new Comparator() {
-            @Override
-            public int compare(Object o1, Object o2) {
-                ContactModel c1 = (ContactModel) o1;
-                ContactModel c2 = (ContactModel) o2;
-                return c1.getName().compareToIgnoreCase(c2.getName());
-            }
-        });
     }
 
     private boolean hasContactReadPermission() {

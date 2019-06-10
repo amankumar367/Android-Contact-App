@@ -39,7 +39,8 @@ ext {
     ]
 
     archLifecycle = [
-            lifeCycle: "androidx.lifecycle:lifecycle-viewmodel:$vLifeCycleKTX"
+            lifeCycle: "androidx.lifecycle:lifecycle-viewmodel:$vLifeCycleKTX",
+            lifeCycleExtension : "androidx.lifecycle:lifecycle-extensions:$vLifeCycleKTX"
     ]
 
     androidLibraries = [
